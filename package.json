@@ -18,7 +18,10 @@
   "homepage": "https://github.com/RedKrovvy2013/combat429s#readme",
   "dependencies": {
     "axios": "^0.18.0",
+    "chai": "^4.1.2",
     "express": "^4.16.3",
-    "mongoose": "^5.0.17"
+    "mocha": "^5.1.1",
+    "mongoose": "^5.0.17",
+    "supertest": "^3.0.0"
   }
 }

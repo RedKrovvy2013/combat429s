@@ -1,5 +1,5 @@
-function RateLimitTaskRunner() {
-    this.tasks = []
+function RateLimitJobRunner() {
+    this.jobs = []
     this.isProcessing = false
     this.isWaiting = false
     this.rateLimit = 2000
@@ -9,8 +9,8 @@ function RateLimitTaskRunner() {
     this.isTrackingRL = false
 }
 
-RateLimitTaskRunner.prototype.doWait = function() {
-    console.log('x')
+RateLimitJobRunner.prototype.doWait = function() {
+    console.log(this.rateLimit)
     this.isWaiting = true
     setTimeout(function() {
         this.isWaiting = false
@@ -18,7 +18,8 @@ RateLimitTaskRunner.prototype.doWait = function() {
     }.bind(this), this.rateLimit)
 }
 
-RateLimitTaskRunner.prototype.setNewRateLimit = function(fetchResult) {
+RateLimitJobRunner.prototype.setNewRateLimit = function(fetchResult) {
+    console.log(fetchResult)
     if(this.isRateLimitLocked)
         return
     if(fetchResult==="error-429" && this.lowestSuccRL === null) {
@@ -40,13 +41,13 @@ RateLimitTaskRunner.prototype.setNewRateLimit = function(fetchResult) {
     }
 }
 
-// TODO: come up with some way to separate task runner and rate limit responsibilities
+// TODO: come up with some way to separate Job runner and rate limit responsibilities
 
-RateLimitTaskRunner.prototype.process = function() {
+RateLimitJobRunner.prototype.process = function() {
     if( this.isProcessing === false &&
-              this.tasks.length > 0 &&
+              this.jobs.length > 0 &&
            this.isWaiting === false    ) {
-        var fx = this.tasks.shift()
+        var fx = this.jobs.shift()
         this.isProcessing = true
 
         fx( function(fetchResult) {
@@ -54,7 +55,7 @@ RateLimitTaskRunner.prototype.process = function() {
             if(this.isTrackingRL)
                 this.setNewRateLimit(fetchResult)
             // -----------------
-            if(this.tasks.length > 0)
+            if(this.jobs.length > 0)
                 this.isTrackingRL = true
             else
                 this.isTrackingRL = false
@@ -67,9 +68,9 @@ RateLimitTaskRunner.prototype.process = function() {
     }
 }
 
-RateLimitTaskRunner.prototype.push = function(task) {
-    this.tasks.push(task)
+RateLimitJobRunner.prototype.push = function(job) {
+    this.jobs.push(job)
     this.process()
 }
 
-module.exports = RateLimitTaskRunner
+module.exports = RateLimitJobRunner
