@@ -31,6 +31,14 @@ detecting prototype which finds an optimal frequency for submitting requests.
     node server.js
     // should see console logging on both servers, exhibiting the prototype.
 
+
+### YouTube Presentation:
+
+Contains discussion on system design, rate limit detection algorithm, some code
+overview and running of prototype.
+
+https://www.youtube.com/watch?v=7aomscFk2hg
+
 #### Notes:
 
 The code has some database aspects which are somewhat developed and
