@@ -19,7 +19,7 @@ var ExportJob = require('./model.ExportJob')
 var AuthoringFile = require('./model.AuthoringFile')
 var exportJobsQueue = require('./exportJobsQueue')
 
-for(var i=0; i < 12; ++i) {
+for(var i=0; i < 7; ++i) {
     var exportJob = function(done) {
         axios.post("http://localhost:8081/convertToPDF", {
             authoringData: "xyz123"
@@ -29,11 +29,11 @@ for(var i=0; i < 12; ++i) {
         })
         .catch(function(e) {
             if(e.response.status === 429) {
-                exportJobsQueue.push(exportJob)
                 done("error-429")
             }
         })
     }
+    exportJob.no = i + 1
     exportJobsQueue.push(exportJob)
 }
 

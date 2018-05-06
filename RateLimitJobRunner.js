@@ -3,14 +3,16 @@ function RateLimitJobRunner() {
     this.isProcessing = false
     this.isWaiting = false
     this.rateLimit = 2000
+    // NOTE: better name for rateLimit could be rateLimit not including
+    //       processing & communication time between machines
     this.highestErrRL = 0
     this.lowestSuccRL = null
     this.isRateLimitLocked = false
     this.isTrackingRL = false
+    this.RL_diffStoppingPoint = 100
 }
 
 RateLimitJobRunner.prototype.doWait = function() {
-    console.log(this.rateLimit)
     this.isWaiting = true
     setTimeout(function() {
         this.isWaiting = false
@@ -19,7 +21,6 @@ RateLimitJobRunner.prototype.doWait = function() {
 }
 
 RateLimitJobRunner.prototype.setNewRateLimit = function(fetchResult) {
-    console.log(fetchResult)
     if(this.isRateLimitLocked)
         return
     if(fetchResult==="error-429" && this.lowestSuccRL === null) {
@@ -35,7 +36,12 @@ RateLimitJobRunner.prototype.setNewRateLimit = function(fetchResult) {
         this.highestErrRL = this.rateLimit
         this.rateLimit = this.rateLimit + (this.lowestSuccRL - this.rateLimit) / 2
     }
-    if( this.lowestSuccRL - this.rateLimit < 50 ) {
+    if( this.lowestSuccRL - this.rateLimit < this.RL_diffStoppingPoint ) {
+        // console.log('------found rate limit stopping point------------')
+        // console.log(this.highestErrRL)
+        // console.log(this.lowestSuccRL)
+        // console.log(this.rateLimit)
+        // console.log('------found rate limit stopping point------------')
         this.rateLimit = this.lowestSuccRL
         this.isRateLimitLocked = true
     }
@@ -43,14 +49,19 @@ RateLimitJobRunner.prototype.setNewRateLimit = function(fetchResult) {
 
 // TODO: come up with some way to separate Job runner and rate limit responsibilities
 
+var requestCount = 0
 RateLimitJobRunner.prototype.process = function() {
     if( this.isProcessing === false &&
               this.jobs.length > 0 &&
            this.isWaiting === false    ) {
-        var fx = this.jobs.shift()
+        var job = this.jobs.shift()
         this.isProcessing = true
 
-        fx( function(fetchResult) {
+        job( function(fetchResult) {
+            if(fetchResult==="error-429")
+                this.push(job)
+                // must do above before setting isProcessing to false, directly below
+            // -----------------
             this.isProcessing = false
             if(this.isTrackingRL)
                 this.setNewRateLimit(fetchResult)
@@ -60,10 +71,12 @@ RateLimitJobRunner.prototype.process = function() {
             else
                 this.isTrackingRL = false
             this.doWait()
-            // NOTE: acting as if rate limit based off of call completion;
-            //       in reality, rate limit based off other server's tracking
-            //       of time from their call process time point to another
-            // TODO: re-engineer to handle above
+            console.log("----------------------")
+            console.log(`Job #: ${job.no}`)
+            console.log(`Req #: ${++requestCount}`)
+            console.log(fetchResult)
+            console.log(new Date())
+            console.log(this.rateLimit)
         }.bind(this) )
     }
 }
